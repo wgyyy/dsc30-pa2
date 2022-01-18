@@ -17,6 +17,9 @@ public class IntStack {
     private int nElems;
     private double loadFactor;
     private double shrinkFactor;
+    int[] track;
+    int p_nElems;
+    int capacity_origin;
 
     public IntStack(int capacity, double loadF, double shrinkF) {
             if (capacity<5&&0.67<=loadF&&loadF<=1&&0 < shrinkF&&shrinkF <= 0.33) {
@@ -29,6 +32,8 @@ public class IntStack {
             data = new int[capacity];
             loadFactor = loadF;
             shrinkFactor = shrinkF;
+            capacity_origin=capacity;
+
 
 
     }
@@ -50,7 +55,7 @@ public class IntStack {
     }
 
     public boolean isEmpty() {
-        if (data[0]==0){
+        if (nElems==0){
             return true;
         }else {
             return false;
@@ -59,19 +64,13 @@ public class IntStack {
     }
 
     public void clear() {
-       for (int x=0;x<data.length;x++){
-           data[x]=0;
-       }
+       data=new int[capacity_origin];
+       nElems=0;
+       p_nElems=nElems;
     }
 
     public int size() {
-        int count=0;
-        for (int y=0;y<data.length;y++){
-            if (data[y]!=0) {
-                count++;
-            }
-        }
-        return count;
+        return nElems;
     }
 
     public int capacity() {
@@ -80,17 +79,17 @@ public class IntStack {
     }
 
     public int peek() {
-        if (isEmpty()==true){
+        if (isEmpty()){
             throw new EmptyStackException();
         }
-        return data[data.length-1];
+        return data[nElems-1];
         /*
         raise an exception if the stack is empty
          */
     }
 
     public void push(int element) {
-        if ((this.size()/this.capacity())>=this.loadFactor){
+        if (((double)this.size()/this.capacity())>=this.loadFactor){
         int[] stored_values=new int[data.length];
         for (int x=0;x<data.length;x++){
             stored_values[x]=data[x];
@@ -100,30 +99,23 @@ public class IntStack {
             data[y]=stored_values[y];
         }
         }
-        for (int m=0;m<data.length;m++){
-            if (data[m]==0){
-                data[m]=element;
-                break;
-            }
-        }
+        data[nElems]=element;
+        nElems++;
+        p_nElems=nElems;
+        track=data;
     }
 
     public int pop() {
-        if (isEmpty()==true){
+        if (isEmpty()){
             throw new EmptyStackException();
         }
         /*
         raise an exception if the stack is empty
          */
         int pop_element = 0;
-        for (int y = data.length - 1; y >= 0; y--) {
-            if (data[y] != 0) {
-                pop_element = data[y];
-                data[y] = 0;
-                break;
-            }
-        }
-        if ((this.size() / this.capacity()) <= this.shrinkFactor) {
+        pop_element=data[nElems-1];
+        data[nElems-1]=0;
+        if (((double)this.size()/this.capacity()) <= this.shrinkFactor) {
             int[] stored_values = new int[data.length];
             for (int x = 0; x < data.length; x++) {
                 stored_values[x] = data[x];
@@ -137,6 +129,9 @@ public class IntStack {
                 data[x] = stored_values[x];
             }
         }
+        nElems--;
+        p_nElems=nElems;
+        track=data;
         return pop_element;
     }
     public void multiPush(int[] elements) {
@@ -156,6 +151,8 @@ public class IntStack {
                 break;
             }
         }
+        p_nElems=nElems;
+        track=data;
 
     }
 
@@ -167,10 +164,12 @@ public class IntStack {
         raise an exception if the amount is a negative number.
          */
         int[] popped=new int[amount];
-        for (int x=1;x<amount+1;x++){
-            popped[x-1]=pop();
+        for (int x=amount-1;x>=0;x--){
+            popped[x]=pop();
 
         }
+        p_nElems=nElems;
+        track=data;
         return popped;
     }
 }

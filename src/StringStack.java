@@ -29,6 +29,7 @@ public class StringStack {
         data = new String[capacity];
         loadFactor = loadF;
         shrinkFactor = shrinkF;
+        nElems=0;
     }
 
     public StringStack(int capacity, double loadF) {
@@ -47,7 +48,7 @@ public class StringStack {
     }
 
     public boolean isEmpty() {
-        if (data[0]==null){
+        if (nElems==0){
             return true;
         }else {
             return false;
@@ -58,21 +59,15 @@ public class StringStack {
         for (int x=0;x<data.length;x++){
             data[x]=null;
         }
+        nElems=0;
     }
 
     public int size() {
-        /* TODO */
-        return 0;
+        return nElems;
     }
 
     public int capacity() {
-        int count=0;
-        for (int y=0;y<data.length;y++){
-            if (data[y]!=null) {
-                count++;
-            }
-        }
-        return count;
+        return data.length;
     }
 
     public String peek() {
@@ -96,12 +91,8 @@ public class StringStack {
                 data[y]=stored_values[y];
             }
         }
-        for (int m=0;m<data.length;m++){
-            if (data[m]==null){
-                data[m]=element;
-                break;
-            }
-        }
+        data[nElems]=element;
+        nElems++;
     }
 
     public String pop() {
@@ -133,6 +124,7 @@ public class StringStack {
                 data[x] = stored_values[x];
             }
         }
+        nElems--;
         return pop_element;
     }
 
@@ -153,6 +145,7 @@ public class StringStack {
                 break;
             }
         }
+        nElems=nElems+elements.length;
     }
 
     public String[] multiPop(int amount) {
@@ -167,6 +160,7 @@ public class StringStack {
             popped[x-1]=pop();
 
         }
+        nElems=nElems-amount;
         return popped;
     }
 }
