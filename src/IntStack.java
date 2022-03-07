@@ -8,7 +8,7 @@ import java.util.EmptyStackException;
 /**
  * This class creates a data type integer stack
  * @author Gaoying Wang
- * @since  ${2022-01-13}
+ * @since  ${2022-03-04}
  */
 public class IntStack {
 
@@ -17,25 +17,21 @@ public class IntStack {
     private int nElems;
     private double loadFactor;
     private double shrinkFactor;
-    int[] track;
-    int p_nElems;
-    int capacity_origin;
+    private int capacity_origin;
 
     public IntStack(int capacity, double loadF, double shrinkF) {
-            if (capacity<5&&0.67<=loadF&&loadF<=1&&0 < shrinkF&&shrinkF <= 0.33) {
+            if (!(capacity>=5) || !(0.67<=loadF&&loadF<=1) || !(0 < shrinkF&&shrinkF <= 0.33)) {
                 throw new IllegalArgumentException();
             }
             /*
             raise exception when any of capacity, loadF, and shrinkF
             is invalid.
              */
-            data = new int[capacity];
-            loadFactor = loadF;
-            shrinkFactor = shrinkF;
-            capacity_origin=capacity;
-
-
-
+            this.data = new int[capacity];
+            this.loadFactor = loadF;
+            this.shrinkFactor = shrinkF;
+            this.capacity_origin=capacity;
+            this.nElems = 0;
     }
 
     public IntStack(int capacity, double loadF) {
@@ -64,9 +60,8 @@ public class IntStack {
     }
 
     public void clear() {
-       data=new int[capacity_origin];
-       nElems=0;
-       p_nElems=nElems;
+       this.data=new int[capacity_origin];
+       this.nElems=0;
     }
 
     public int size() {
@@ -74,8 +69,7 @@ public class IntStack {
     }
 
     public int capacity() {
-        int capa=data.length;
-        return capa;
+        return this.data.length;
     }
 
     public int peek() {
@@ -90,19 +84,14 @@ public class IntStack {
 
     public void push(int element) {
         if (((double)this.size()/this.capacity())>=this.loadFactor){
-        int[] stored_values=new int[data.length];
-        for (int x=0;x<data.length;x++){
-            stored_values[x]=data[x];
-        }
-        data=new int[data.length*2];
-        for (int y=0;y<stored_values.length;y++){
-            data[y]=stored_values[y];
-        }
+            int[] new_list = new int[this.data.length*2];
+            for (int i = 0; i < this.data.length; i++){
+                new_list[i] = this.data[i];
+            }
+            this.data = new_list;
         }
         data[nElems]=element;
         nElems++;
-        p_nElems=nElems;
-        track=data;
     }
 
     public int pop() {
@@ -112,64 +101,50 @@ public class IntStack {
         /*
         raise an exception if the stack is empty
          */
-        int pop_element = 0;
-        pop_element=data[nElems-1];
-        data[nElems-1]=0;
+        int pop_element;
+        pop_element=this.data[nElems-1];
+        this.data[nElems-1]=0;
         if (((double)this.size()/this.capacity()) <= this.shrinkFactor) {
-            int[] stored_values = new int[data.length];
-            for (int x = 0; x < data.length; x++) {
-                stored_values[x] = data[x];
-            }
-            if ((data.length / 2) < capacity()) {
-                data = new int[capacity()];
+            int new_capacity;
+            if ((data.length/2) < capacity_origin) {
+                new_capacity = capacity_origin;
             } else {
-                data = new int[data.length / 2];
+                new_capacity = data.length / 2;
             }
-            for (int x = 0; x < data.length; x++) {
-                data[x] = stored_values[x];
+            int[] new_list = new int[new_capacity];
+            for (int x = 0; x < this.data.length; x++) {
+                new_list[x] = this.data[x];
             }
+            this.data = new_list;
         }
         nElems--;
-        p_nElems=nElems;
-        track=data;
         return pop_element;
     }
     public void multiPush(int[] elements) {
-        for (int m=0;m<elements.length;m++){
-            if (elements[m]==0){
-                throw new IllegalArgumentException();
-            }
+        if (elements == null) {
+            throw new IllegalArgumentException();
         }
         /*
         raise an exception if there are null elements in elements.
          */
-        for (int y=0;y<data.length;y++){
-            if (data[y]==0){
-                for (int x=0;x<elements.length;x++){
-                    push(elements[x]);
-                }
-                break;
-            }
+        for (int i = 0;i < elements.length; i++){
+            this.push(elements[i]);
         }
-        p_nElems=nElems;
-        track=data;
-
     }
 
     public int[] multiPop(int amount) {
-        if (amount<0){
+        if (amount<=0){
             throw new IllegalArgumentException();
         }
         /*
         raise an exception if the amount is a negative number.
          */
         int[] popped=new int[amount];
+        int count = 0;
         for (int x=amount-1;x>=0;x--){
-            popped[x]=pop();
-
+            popped[count]=this.pop();
+            count++;
         }
-        p_nElems=nElems;
-        track=data;
         return popped;
     }
 }

@@ -8,7 +8,7 @@ import java.util.EmptyStackException;
 /**
  * This class creates a Stack for strings
  * @author Gaoying Wang
- * @since  ${2022-01-14}
+ * @since  ${2022-03-04}
  */
 public class StringStack {
 
@@ -17,19 +17,20 @@ public class StringStack {
     private int nElems;
     private double loadFactor;
     private double shrinkFactor;
+    private int capacity_origin;
 
     public StringStack(int capacity, double loadF, double shrinkF) {
-        if (capacity<5&&0.67<=loadF&&loadF<=1&&0 < shrinkF&&shrinkF <= 0.33) {
+        if (!(capacity>=5) || !(0.67<=loadF&&loadF<=1) || !(0 < shrinkF&&shrinkF <= 0.33)) {
             throw new IllegalArgumentException();
         }
             /*
             raise exception when any of capacity, loadF, and shrinkF
             is invalid.
              */
-        data = new String[capacity];
-        loadFactor = loadF;
-        shrinkFactor = shrinkF;
-        nElems=0;
+        this.data = new String[capacity];
+        this.loadFactor = loadF;
+        this.shrinkFactor = shrinkF;
+        this.capacity_origin=capacity;
     }
 
     public StringStack(int capacity, double loadF) {
@@ -56,111 +57,92 @@ public class StringStack {
     }
 
     public void clear() {
-        for (int x=0;x<data.length;x++){
-            data[x]=null;
-        }
-        nElems=0;
+        this.data=new String[capacity_origin];
+        this.nElems=0;
     }
 
     public int size() {
-        return nElems;
+        return this.nElems;
     }
 
     public int capacity() {
-        return data.length;
+        return this.data.length;
     }
 
     public String peek() {
-        if (isEmpty()==true){
+        if (isEmpty()){
             throw new EmptyStackException();
         }
-        return data[data.length-1];
+        return data[nElems-1];
         /*
         raise an exception if the stack is empty
          */
     }
 
     public void push(String element) {
-        if ((this.size()/this.capacity())>=this.loadFactor){
-            String[] stored_values=new String[data.length];
-            for (int x=0;x<data.length;x++){
-                stored_values[x]=data[x];
+        if (((double)this.size()/this.capacity())>=this.loadFactor){
+            String[] new_list = new String[this.data.length*2];
+            for (int i = 0; i < this.data.length; i++){
+                new_list[i] = this.data[i];
             }
-            data=new String[data.length*2];
-            for (int y=0;y<stored_values.length;y++){
-                data[y]=stored_values[y];
-            }
+            this.data = new_list;
         }
         data[nElems]=element;
         nElems++;
     }
 
     public String pop() {
-        if (isEmpty()==true){
+        if (isEmpty()){
             throw new EmptyStackException();
         }
         /*
         raise an exception if the stack is empty
          */
-        String pop_element = null;
-        for (int y = data.length - 1; y >= 0; y--) {
-            if (data[y] != null) {
-                pop_element = data[y];
-                data[y] = null;
-                break;
-            }
-        }
-        if ((this.size() / this.capacity()) <= this.shrinkFactor) {
-            String[] stored_values = new String[data.length];
-            for (int x = 0; x < data.length; x++) {
-                stored_values[x] = data[x];
-            }
-            if ((data.length / 2) < capacity()) {
-                data = new String[capacity()];
+        String pop_element;
+        pop_element=this.data[nElems-1];
+        this.data[nElems-1]= null;
+        if (((double)this.size()/this.capacity()) <= this.shrinkFactor) {
+            int new_capacity;
+            if ((data.length/2) < capacity_origin) {
+                new_capacity = capacity_origin;
             } else {
-                data = new String[data.length / 2];
+                new_capacity = data.length / 2;
             }
-            for (int x = 0; x < data.length; x++) {
-                data[x] = stored_values[x];
+            String[] new_list = new String[new_capacity];
+            for (int x = 0; x < this.data.length; x++) {
+                new_list[x] = this.data[x];
             }
+            this.data = new_list;
         }
         nElems--;
         return pop_element;
     }
 
     public void multiPush(String[] elements) {
-        for (int m=0;m<elements.length;m++){
-            if (elements[m]==null){
-                throw new IllegalArgumentException();
-            }
+        if (elements == null) {
+            throw new IllegalArgumentException();
         }
         /*
         raise an exception if there are null elements in elements.
          */
-        for (int y=0;y<data.length;y++){
-            if (data[y]==null){
-                for (int x=0;x<elements.length;x++){
-                    push(elements[x]);
-                }
-                break;
-            }
+        for (int i = 0;i < elements.length; i++){
+            this.push(elements[i]);
         }
-        nElems=nElems+elements.length;
     }
 
     public String[] multiPop(int amount) {
-        if (amount<0){
+        if (amount<=0){
             throw new IllegalArgumentException();
         }
         /*
         raise an exception if the amount is a negative number.
          */
         String[] popped=new String[amount];
-        for (int x=1;x<amount+1;x++){
-            popped[x-1]=pop();
-
+        int count = 0;
+        for (int x=amount-1;x>=0;x--){
+            popped[count]=this.pop();
+            count++;
         }
-        nElems=nElems-amount;
         return popped;
     }
 }

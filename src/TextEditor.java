@@ -3,10 +3,13 @@
     PID:  A16131629
  */
 
+import java.nio.charset.CharacterCodingException;
+import java.util.Locale;
+
 /**
  * This class help users edit the text.
  * @author Gaoying Wang
- * @since  ${2022-01-16}
+ * @since  ${2022-03-04}
  */
 public class TextEditor {
 
@@ -33,15 +36,23 @@ public class TextEditor {
         return text.length();
     }
 
+
     public void caseConvert(int i, int j) {
-        StringBuffer newStr=new StringBuffer(1);
-        for (int x=i;x<j;x++){
-            if (Character.isLetter(text.charAt(x))){
-                if (Character.isUpperCase(text.charAt(x))){
-                    newStr.setCharAt(x,Character.toLowerCase(text.charAt(x)));
-                }else if (Character.isLowerCase(text.charAt(x))){
-                    newStr.setCharAt(x,Character.toUpperCase(text.charAt(x)));
+        if (i > this.text.length() || j > this.text.length() || i < 0 || j < 0 || i >= j) {
+            throw  new IllegalArgumentException();
+        }
+        for ( int x = i; x < j; x++) {
+            char convert_to_char = text.charAt(x);
+            if (Character.isLetter(convert_to_char)) {
+                String return_String;
+                if (Character.isUpperCase(convert_to_char)) {
+                    return_String = String.valueOf(convert_to_char);
+                    return_String = return_String.toLowerCase();
+                } else {
+                    return_String = String.valueOf(convert_to_char);
+                    return_String = return_String.toUpperCase();
                 }
+                this.text= this.text.substring(0,x) + return_String + this.text.substring(x+1);
             }
         }
         undo.push(i);
@@ -50,39 +61,35 @@ public class TextEditor {
     }
 
     public void insert(int i, String input) {
-        String new_text=new String();
-        insertedText.push(input);
-        for (int x=0;x<text.length();x++){
-            new_text+=text.charAt(x);
-            if (x==i){
-                new_text+=input;
-            }
+        if (input == null ) {
+            throw  new NullPointerException();
         }
-        text=new_text;
-        undo.push(i);
-        undo.push(i+input.length());
-        undo.push(1);
+        if (i > this.text.length()) {
+            throw new IllegalArgumentException();
+        }
+        if (this.length() == 0) {
+            this.text = input;
+        } else {
+            String first_piece = this.text.substring(0,i);
+            String second_piece = this.text.substring(i);
+            this.text = first_piece + input + second_piece;
+        }
+        this.undo.push(i);
+        this.undo.push(i+input.length());
+        this.undo.push(1);
     }
 
     public void delete(int i, int j) {
-        String deleted_text=new String();
-        for (int y=i;y<j;y++){
-            deleted_text+=text.charAt(y);
+        if( i > this.text.length() || i < 0 ||j > this.text.length() || i >= j || j < 0) {
+            throw new IllegalArgumentException();
         }
-        deletedText.push(deleted_text);
-        String new_text=new String();
-        for (int x=0;x<text.length();x++){
-            if (x==i){
-                x=j;
-                new_text+=text.charAt(x);
-            }else {
-                new_text += text.charAt(x);
-            }
-        }
-        text=new_text;
-        undo.push(i);
-        undo.push(j);
-        undo.push(2);
+        String deleted_text= this.text.substring(i,j);
+        String first_piece = this.text.substring(0,i);
+        String second_piece = this.text.substring(j);
+        this.deletedText.push(deleted_text);
+        this.text = first_piece + second_piece;
+        this.undo.push(i);
+        this.undo.push(2);
     }
 
     public boolean undo() {
@@ -91,29 +98,31 @@ public class TextEditor {
         if (undo.isEmpty()){
             return false;
         }else{
-            if (undo.pop()==0){
+            if (undo.peek()==0){
+                undo.pop();
                 end=undo.pop();
                 start=undo.pop();
-                caseConvert(start,end);
+                this.caseConvert(start,end);
                 redo.push(start);
                 redo.push(end);
                 redo.push(0);
                 return true;
-            }else if(undo.pop()==1){
+            }else if(undo.peek()==1){
+                undo.pop();
                 end=undo.pop();
                 start=undo.pop();
-                delete(start,end);
+                this.delete(start,end);
                 redo.push(start);
-                redo.push(end);
                 redo.push(1);
                 return true;
             }else{
-                end=undo.pop();
+                undo.pop();
                 start=undo.pop();
                 String inserted=deletedText.pop();
-                insert(start,inserted);
+                this.insert(start,inserted);
                 redo.push(start);
                 redo.push(start+inserted.length());
+                redo.push(2);
                 return true;
             }
         }
@@ -125,20 +134,22 @@ public class TextEditor {
         }else{
             int start=0;
             int end=0;
-            if (redo.pop()==0){
+            if (redo.peek()==0){
+                redo.pop();
                 end=redo.pop();
                 start=redo.pop();
-                caseConvert(start,end);
+                this.caseConvert(start,end);
                 return true;
-            }else if(redo.pop()==1){
-                end=redo.pop();
+            }else if(redo.peek()==1){
+                redo.pop();
                 start=redo.pop();
-                insert(start,deletedText.pop());
+                this.insert(start,deletedText.pop());
                 return true;
             }else{
+                redo.pop();
                 end=redo.pop();
                 start=redo.pop();
-                delete(start,end);
+                this.delete(start,end);
                 return true;
             }
         }
